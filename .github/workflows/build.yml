@@ -15,17 +15,56 @@ jobs:
     steps:
     - name: 检出 Chromium 代码
       run: |
-        git clone --depth 2 -b ${{ github.event.inputs.chromium_version }} https://chromium.googlesource.com/chromium/src.git -j 16 &
+        echo "开始并行克隆 Chromium 源码和 Depot Tools..."
+        
+        # 创建命名管道用于捕获进度
+        mkfifo chromium_progress_pipe depot_tools_progress_pipe || true
+        
+        # 克隆 Chromium 源码并显示进度
+        echo "启动 Chromium 源码克隆进程..."
+        git clone --progress --depth 2 -b ${{ github.event.inputs.chromium_version }} https://chromium.googlesource.com/chromium/src.git -j 16 2>&1 | while IFS= read -r line; do
+          echo "[Chromium] $line"
+        done &
         GIT_CHROMIUM_PID=$!
+        echo "Chromium 源码克隆进程 PID: $GIT_CHROMIUM_PID"
         
-        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git -j 16 &
+        # 克隆 Depot Tools 并显示进度
+        echo "启动 Depot Tools 克隆进程..."
+        git clone --progress https://chromium.googlesource.com/chromium/tools/depot_tools.git -j 16 2>&1 | while IFS= read -r line; do
+          echo "[Depot Tools] $line"
+        done &
         GIT_DEPOT_TOOLS_PID=$!
+        echo "Depot Tools 克隆进程 PID: $GIT_DEPOT_TOOLS_PID"
         
+        # 等待克隆完成
+        echo "等待 Chromium 源码克隆完成..."
         wait $GIT_CHROMIUM_PID
+        CHROMIUM_EXIT_CODE=$?
+        echo "Chromium 源码克隆完成，退出码: $CHROMIUM_EXIT_CODE"
+        
+        echo "等待 Depot Tools 克隆完成..."
         wait $GIT_DEPOT_TOOLS_PID
+        DEPOT_TOOLS_EXIT_CODE=$?
+        echo "Depot Tools 克隆完成，退出码: $DEPOT_TOOLS_EXIT_CODE"
+        
+        # 清理命名管道
+        rm -f chromium_progress_pipe depot_tools_progress_pipe || true
+        
+        # 检查克隆结果
+        if [ $CHROMIUM_EXIT_CODE -ne 0 ] || [ $DEPOT_TOOLS_EXIT_CODE -ne 0 ]; then
+          echo "错误：克隆过程失败"
+          echo "Chromium 源码克隆退出码: $CHROMIUM_EXIT_CODE"
+          echo "Depot Tools 克隆退出码: $DEPOT_TOOLS_EXIT_CODE"
+          exit 1
+        fi
+        
+        echo "两个仓库均已成功克隆"
         
         export PATH="$PWD/depot_tools:$PATH"
+        echo "已设置 depot_tools 路径"
 
+        echo "开始同步代码依赖..."
         gclient sync -D --with_branch_heads --with_tags
+        echo "代码依赖同步完成"
 
         echo "Chromium 代码已成功检出并同步"
