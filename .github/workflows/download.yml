@@ -13,10 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 检出仓库代码
     - uses: actions/checkout@v5
-      with:
-        path: .
     
     - name: 显示文件列表
       run: |
