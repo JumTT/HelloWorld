@@ -1,58 +1,30 @@
 name: Build Chromium
 
 on:
-  repository_dispatch:
-    types: [build-chromium]
+  workflow_dispatch:
+    inputs:
+      chromium_version:
+        description: 'Chromium 版本号 (例如: 142.0.7444.135)'
+        required: true
+        default: '142.0.7444.135'
 
 jobs:
   build-chromium:
     runs-on: ubuntu-latest
     
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v4
-      
-    - name: 设置环境变量
+    - name: 检出 Chromium 代码
       run: |
-        echo "CHROMIUM_VERSION=${{ github.event.client_payload.version }}" >> $GITHUB_ENV
+        git clone --depth 2 -b ${{ github.event.inputs.chromium_version }} https://chromium.googlesource.com/chromium/src.git -j 16 &
+        GIT_CHROMIUM_PID=$!
         
-    - name: 下载 Chromium 源码
-      uses: actions/download-artifact@v4
-      with:
-        name: chromium-${{ env.CHROMIUM_VERSION }}
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git -j 16 &
+        GIT_DEPOT_TOOLS_PID=$!
         
-    - name: 解压 Chromium 源码
-      run: |
-        # 解压源码
-        tar -xf chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
+        wait $GIT_CHROMIUM_PID
+        wait $GIT_DEPOT_TOOLS_PID
         
-    - name: 准备编译环境
-      run: |
-        # 进入源码目录
-        cd chromium/src
-        
-        # 安装编译依赖
-        ./build/install-build-deps.sh --no-syms --lib32 --arm
-        
-        # 设置编译环境
-        export PATH="$PWD/third_party/depot_tools:$PATH"
-        
-    - name: 编译 Chromium
-      run: |
-        cd chromium/src
-        
-        # 创建编译输出目录
-        mkdir -p out/Default
-        
-        # 生成编译配置
-        gn gen out/Default --args="is_debug=false symbol_level=0"
-        
-        # 开始编译 (这里只编译 Cronet 作为示例)
-        ninja -C out/Default cronet
-        
-    - name: 上传编译产物
-      uses: actions/upload-artifact@v4
-      with:
-        name: chromium-build-${{ env.CHROMIUM_VERSION }}
-        path: chromium/src/out/Default/cronet
-        retention-days: 7
+        export PATH="$PWD/depot_tools:$PATH"
+
+        cd src
+        gclient sync -D --with_branch_heads --with_tags

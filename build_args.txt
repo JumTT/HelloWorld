@@ -1,0 +1,14 @@
+is_debug=false
+is_component_build=false
+is_clang=true
+symbol_level=1
+disable_file_support=true
+disable_cache_support=true
+enable_websockets=false
+enable_webui_certificate_viewer=false
+enable_webui_generate_code_cache=false
+enable_vr=false
+use_thin_lto=true
+use_layout_plugin=false
+enable_trace_logging=false
+is_official_build=false
