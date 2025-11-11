@@ -1,37 +1,62 @@
 name: Debug
 
-on:
-  workflow_dispatch:
-    inputs:
-      chromium_version:
-        description: 'Chromium 版本号 (例如: 142.0.7444.135)'
-        required: true
-        default: '142.0.7444.135'
-
 jobs:
-  download-master:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v5
-    
-    - name: 显示文件列表
-      run: |
-        echo "当前工作目录: $(pwd)"
-        echo "仓库文件列表:"
-        ls -la
-        
-    - name: 显示 Git 状态
-      run: |
-        echo "当前分支:"
-        git branch
-        echo "最近提交:"
-        git log --oneline -5
-
   download-chromium:
     runs-on: ubuntu-latest
     
     steps:
     - name: 创建工作目录
       run: |
-        ls -la
+        mkdir -p chromium-workspace/${{ env.CHROMIUM_VERSION }}
+        
+    - name: 检查是否已存在相同版本的 Chromium
+      id: check_existing
+      run: |
+        if [ -f "chromium-workspace/${{ env.CHROMIUM_VERSION }}/chromium-${{ env.CHROMIUM_VERSION }}.tar.xz" ]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: 下载 Chromium 源码
+      if: steps.check_existing.outputs.exists == 'false'
+      run: |
+        cd chromium-workspace/${{ env.CHROMIUM_VERSION }}
+        aria2c -x 16 -s 16 https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${{ env.CHROMIUM_VERSION }}.tar.xz -o chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
+        
+    - name: Clone depot_tools
+      if: steps.check_existing.outputs.exists == 'false'
+      run: |
+        cd chromium-workspace
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                
+    - name: 使用现有 Chromium 源码
+      if: steps.check_existing.outputs.exists == 'true'
+      run: |
+        echo "使用已存在的 Chromium 源码，版本: ${{ env.CHROMIUM_VERSION }}"
+
+    - name: 上传Chromium源码 (如果不需要编译)
+      uses: actions/upload-artifact@v4
+      with:
+        name: chromium-${{ env.CHROMIUM_VERSION }}
+        path: |
+          chromium-workspace/${{ env.CHROMIUM_VERSION }}/chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
+        retention-days: 1
+        compression-level: 0
+
+    - name: 上传 depot_tools 源码
+      if: ${{ env.SHOULD_BUILD == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: depot_tools
+        path: |
+          chromium-workspace/depot_tools
+        retention-days: 1
+        overwrite: true
+        
+    - name: 触发编译工作流 (如果需要)
+      if: ${{ env.SHOULD_BUILD == 'true' }}
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        event-type: build-chromium
+        client-payload: '{"version": "${{ env.CHROMIUM_VERSION }}"}'
