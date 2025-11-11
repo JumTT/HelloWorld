@@ -1,4 +1,4 @@
-name: Build Chromium
+name: Build Cronet
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         default: '142.0.7444.135'
 
 jobs:
-  build-chromium:
+  build-cronet:
     runs-on: ubuntu-latest
     
     steps:
