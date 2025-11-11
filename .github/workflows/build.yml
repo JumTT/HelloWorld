@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - uses: actions/checkout@v5
     - name: 检出 Chromium 代码
       run: |
         echo "开始并行克隆 Chromium 源码和 Depot Tools..."
