@@ -26,5 +26,6 @@ jobs:
         
         export PATH="$PWD/depot_tools:$PATH"
 
-        cd src
         gclient sync -D --with_branch_heads --with_tags
+
+        echo "Chromium 代码已成功检出并同步"
