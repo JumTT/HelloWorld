@@ -67,4 +67,9 @@ jobs:
         gclient sync -D --with_branch_heads --with_tags
         echo "代码依赖同步完成"
 
+        echo "当前目录文件列表:"
+        ls -la
+
         echo "Chromium 代码已成功检出并同步"
+
+        
