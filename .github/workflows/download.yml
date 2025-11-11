@@ -1,5 +1,13 @@
 name: Debug
 
+on:
+  workflow_dispatch:
+    inputs:
+      chromium_version:
+        description: 'Chromium 版本号 (例如: 142.0.7444.135)'
+        required: true
+        default: '142.0.7444.135'
+
 jobs:
   download-chromium:
     runs-on: ubuntu-latest
