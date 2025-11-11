@@ -15,12 +15,16 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
+    - name: 设置环境变量
+      run: |
+        echo "CHROMIUM_VERSION=${{ github.event.inputs.chromium_version }}" >> $GITHUB_ENV
+        echo "SHOULD_BUILD=${{ github.event.inputs.should_build }}" >> $GITHUB_ENV
+
     - name: 下载 Chromium 源码
       run: |
         aria2c -x 16 -s 16 https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${{ env.CHROMIUM_VERSION }}.tar.xz -o chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
         tar xJf chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
         mv chromium-${{ env.CHROMIUM_VERSION }} src
-        
 
         echo "Chromium 代码已成功检出并同步"
 

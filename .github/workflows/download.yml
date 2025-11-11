@@ -1,10 +1,31 @@
-name: Debug
+name: Download Chromium
+
+on:
+  workflow_dispatch:
+    inputs:
+      chromium_version:
+        description: 'Chromium 版本号 (例如: 142.0.7444.135)'
+        required: true
+        default: '142.0.7444.135'
+      should_build:
+        description: '是否编译 Cronet (true/false)'
+        required: true
+        default: 'true'
+        type: boolean
 
 jobs:
   download-chromium:
     runs-on: ubuntu-latest
     
     steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置环境变量
+      run: |
+        echo "CHROMIUM_VERSION=${{ github.event.inputs.chromium_version }}" >> $GITHUB_ENV
+        echo "SHOULD_BUILD=${{ github.event.inputs.should_build }}" >> $GITHUB_ENV
+        
     - name: 创建工作目录
       run: |
         mkdir -p chromium-workspace/${{ env.CHROMIUM_VERSION }}
