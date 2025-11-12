@@ -1,0 +1,21 @@
+name: Build Cronet
+
+on:
+  workflow_dispatch:
+    inputs:
+      chromium_version:
+        description: 'Chromium 版本号 (例如: 142.0.7444.135)'
+        required: true
+        default: '142.0.7444.135'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: src
+env:
+  CACHE_EPOCH: 1
+  CCACHE_MAXSIZE: 200M
+  CCACHE_MAXFILES: 0
+  SCCACHE_CACHE_SIZE: 200M
+jobs:
+  
