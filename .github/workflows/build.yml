@@ -39,4 +39,5 @@ jobs:
 
         git clone --depth 1 -b ${{ env.CHROMIUM_VERSION }} https://chromium.googlesource.com/chromium/src.git -j 16
         echo "Chromium 代码已成功克隆"
-        du -ah src
+        du -sh src
+        du -sh src/*
