@@ -19,7 +19,7 @@ jobs:
       run: |
         echo "CHROMIUM_VERSION=${{ github.event.inputs.chromium_version }}" >> $GITHUB_ENV
         echo "SHOULD_BUILD=${{ github.event.inputs.should_build }}" >> $GITHUB_ENV
-        echo "CHROMIUM_FILE_PERFIX=chromium-${{ env.CHROMIUM_VERSION }}" >> $GITHUB_ENV
+        echo "CHROMIUM_FILE_PERFIX=chromium-${{ github.event.inputs.chromium_version }}" >> $GITHUB_ENV
 
     - name: 克隆 Chromium 源码
       run: |
