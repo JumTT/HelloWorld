@@ -19,13 +19,20 @@ jobs:
       run: |
         echo "CHROMIUM_VERSION=${{ github.event.inputs.chromium_version }}" >> $GITHUB_ENV
         echo "SHOULD_BUILD=${{ github.event.inputs.should_build }}" >> $GITHUB_ENV
+        echo "CHROMIUM_FILE_PERFIX=chromium-${{ env.CHROMIUM_VERSION }}" >> $GITHUB_ENV
 
-    - name: 下载 Chromium 源码
+    - name: 克隆 Chromium 源码
       run: |
-        aria2c -x 16 -s 16 https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${{ env.CHROMIUM_VERSION }}.tar.xz -o chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
-        tar xJf chromium-${{ env.CHROMIUM_VERSION }}.tar.xz
-        mv chromium-${{ env.CHROMIUM_VERSION }} src
-
-        echo "Chromium 代码已成功检出并同步"
-
+        # 使用 aria2c 多线程下载
+        echo "开始下载 Chromium 源码..."
+        aria2c -x 16 -s 16 https://commondatastorage.googleapis.com/chromium-browser-official/${{ env.CHROMIUM_FILE_PERFIX }}.tar.xz -o ${{ env.CHROMIUM_FILE_PERFIX }}.tar.xz
         
+        # 创建目标目录
+        mkdir -p ${{ env.CHROMIUM_FILE_PERFIX }}
+
+        sed -i "s/^\^/${{ env.CHROMIUM_FILE_PERFIX }}\/" include.txt
+        echo "开始解压 Chromium 源码..."
+        tar xzf "${{ env.CHROMIUM_FILE_PERFIX }}.tar.xz"
+        
+        rm ${{ env.CHROMIUM_FILE_PERFIX }}.tar.xz
+        mv ${{ env.CHROMIUM_FILE_PERFIX }} src
