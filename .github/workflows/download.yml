@@ -23,6 +23,7 @@ jobs:
 
     - name: 创建工作目录
       run: |
+        chmod +x ./platforms.sh
         ./platforms.sh
       
     # - name: 设置环境变量
